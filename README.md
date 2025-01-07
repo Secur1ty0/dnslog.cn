@@ -75,7 +75,7 @@ systemctl restart nginx php74-php-fpm
 
 ③.修改dns服务器为自定义服务器
 
-![image-20250107094023896](/Users/rainmaker/Library/Application Support/typora-user-images/image-20250107094023896.png)
+![image-202501070940238961](./img/image4png.png)
 
 ## 3.dns启动
 
