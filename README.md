@@ -32,7 +32,7 @@ chmod 777 /var/www/dnslogcn/data
 chown -R nginx:nginx /var/lib/php/session
 chmod -R 700 /var/lib/php/session
 
-# 6. 配置 Web 服务器，如果使用 Nginx，典型的配置如下：
+# 8. 配置 Web 服务器，如果使用 Nginx，典型的配置如下：
 server {
     listen       80;
     server_name  example.com;
@@ -59,7 +59,7 @@ server {
     }
 }
 
-# 7. 重启Web服务和PHP服务
+# 9. 重启Web服务和PHP服务
 systemctl restart nginx php74-php-fpm
 ```
 
