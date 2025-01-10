@@ -2,7 +2,7 @@
 // SQLite 数据库文件路径
 $db_file = '../data/domain.db';
 
-$domain_suffix = "sz-g0v.cc";
+$domain_suffix = "example.com";
 
 // 全局数据库连接变量
 $gdb = null;
