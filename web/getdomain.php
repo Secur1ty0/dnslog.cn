@@ -5,9 +5,6 @@ include 'db.php';
 // 开启或继续现有的会话
 session_start();
 
-// 获取数据库连接
-$db = get_db_connection();
-
 // 获取当前会话的PHPSESSID
 $session_id = session_id();
 
@@ -30,7 +27,7 @@ function generate_random_domain($length = 6) {
 
 // 生成并记录随机域名
 $random_domain = generate_random_domain();
-log_generated_domain($db, $random_domain,$session_id);
+log_generated_domain($random_domain,$session_id);
 // 示例返回内容
 echo $random_domain;
 ?>

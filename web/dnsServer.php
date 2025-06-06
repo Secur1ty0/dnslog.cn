@@ -1,9 +1,12 @@
 <?php
 // 包含数据库操作文件
 include 'db.php';
+include 'archive.php';
+
 
 // 检查数据库文件是否存在
 function check_and_initialize_db($db_file) {
+    
     if (!file_exists($db_file)) {
         // 如果数据库文件不存在，初始化数据库
         init_db($db_file);
@@ -43,6 +46,8 @@ function init_db($db_file) {
 // 执行检查和初始化
 check_and_initialize_db($db_file);
 
+
+
  // 监听所有IP地址
 $port = 53;
 $host = '0.0.0.0';
@@ -53,6 +58,9 @@ $allowed_domain_suffix = $domain_suffix;
 
 // 获取数据库连接
 $db = get_db_connection();
+
+// 备份检查
+auto_monthly_archive_tables($db_file,$backup_dir,$meta_file);
 
 // 创建一个UDP socket
 $socket = socket_create(AF_INET, SOCK_DGRAM, SOL_UDP);
@@ -70,11 +78,24 @@ echo "DNS server started on $host:$port...\n";
 
 // 获取请求的IP地址
 date_default_timezone_set('Asia/Shanghai');
+
+// 初始化归档标记
+$last_archive_check = 0;
+$archive_check_interval = 600*6*3; // 3个小时
+
 while (true) {
     $buf = '';
     $from = '';
     $port = 0;
     $timestamp = date('Y-m-d H:i:s');
+
+    // 每3个小时尝试归档一次
+    $now = time();
+    if ($now - $last_archive_check >= $archive_check_interval) {
+        auto_monthly_archive_tables($db_file,$backup_dir,$meta_file);
+        $last_archive_check = $now;
+    }
+
     // 接收 DNS 查询
     socket_recvfrom($socket, $buf, 512, 0, $from, $port);
 
@@ -95,7 +116,7 @@ while (true) {
     // 使用 $from 作为源 IP 地址
     $ip = $from; 
     // 记录合法请求
-    log_dns_request($db, $domain, $ip);
+    log_dns_request($domain, $ip);
 	// 生成并发送 DNS 响应，固定 IP 为 127.0.0.1
     $response = generate_dns_response($buf, $domain, '127.0.0.1');
 

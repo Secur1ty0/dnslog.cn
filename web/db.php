@@ -1,46 +1,49 @@
 <?php
 // SQLite 数据库文件路径
 $db_file = '../data/domain.db';
-
+// 你购买的域名
 $domain_suffix = "example.com";
+$backup_dir = '../data/archive';
+$meta_file = '../data/.last_archive_time';
 
-// 全局数据库连接变量
-$gdb = null;
+
 
 // 初始化数据库连接
 function get_db_connection() {
-    global $gdb, $db_file; // 声明 $db 和 $db_file 为全局变量
-    // 如果数据库连接已经存在，则直接返回
-    // 如果数据库连接已经存在，则直接返回
-    if ($gdb === null) {
-        try {
+    global $db_file;
+    try {
             $gdb = new SQLite3($db_file);
         } catch (Exception $e) {
             // 捕捉异常并处理，例如权限不够或文件不存在
             error_log("数据库连接失败: " . $e->getMessage());
             echo "无法连接到数据库，请检查文件权限或路径。";
-            exit; // 停止脚本执行
+            exit;
         }
-    }
     return $gdb;
 }
 
 
 // 记录合法的DNS请求
-function log_dns_request($db, $domain, $ip) {
+function log_dns_request($domain, $ip) {
+    $db = get_db_connection();
     $stmt = $db->prepare("INSERT INTO dns_requests (domain, ip) VALUES (:domain, :ip)");
     $stmt->bindValue(':domain', $domain, SQLITE3_TEXT);
     $stmt->bindValue(':ip', $ip, SQLITE3_TEXT);
     $stmt->execute();
+    $stmt->close(); // 显式释放语句资源
+    $db->close();   // 关闭连接
 }
 
 
 // 记录生成的域名
-function log_generated_domain($db, $domain,$phpsessions) {
+function log_generated_domain($domain,$phpsessions) {
+    $db = get_db_connection();
     $stmt = $db->prepare("INSERT INTO create_domains (domain, phpsession) VALUES (:domain, :phpsess)");
     $stmt->bindValue(':domain', $domain, SQLITE3_TEXT);
     $stmt->bindValue(':phpsess', $phpsessions, SQLITE3_TEXT);
     $stmt->execute();
+    $stmt->close(); // 显式释放语句资源
+    $db->close();   // 关闭连接
 }
 
 // 生成 DNS 响应数据包

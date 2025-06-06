@@ -1,9 +1,10 @@
 <?php
 require 'db.php';
 
+header('Content-Type: application/json; charset=utf-8');
+
 // 获取请求头中的 PHPSESSID
 $phpsession = $_COOKIE['PHPSESSID'] ?? '';
-
 if (empty($phpsession)) {
     echo json_encode([]);
     exit;
@@ -12,43 +13,47 @@ if (empty($phpsession)) {
 // 初始化数据库连接
 $db = get_db_connection();
 
-// 查询 create_domains 表中的域名
-$stmt = $db->prepare("SELECT domain FROM create_domains WHERE phpsession = :phpsession  ORDER BY id DESC LIMIT 1");
-$stmt->bindValue(':phpsession', $phpsession, SQLITE3_TEXT);
-$result = $stmt->execute();
+// 查询最近 5 条 create_domains 记录
+$stmt1 = $db->prepare("SELECT domain FROM create_domains WHERE phpsession = :phpsession ORDER BY id DESC LIMIT 5");
+$stmt1->bindValue(':phpsession', $phpsession, SQLITE3_TEXT);
+$result1 = $stmt1->execute();
 
-$domain = null;
-$row = $result->fetchArray(SQLITE3_ASSOC);
+$domains = [];
+while ($row = $result1->fetchArray(SQLITE3_ASSOC)) {
+    if (!empty($row['domain'])) {
+        $domains[] = $row['domain'];
+    }
+}
+$stmt1->close();
 
-if ($row) {
-    $domain = $row['domain'];
-} else {
-    // 如果没有找到域名，返回空数组
+// 如果没有找到任何域名，返回空数组
+if (empty($domains)) {
     echo json_encode([]);
     exit;
 }
 
-
-// 查询 dns_requests 表中的记录
-$stmt = $db->prepare("SELECT domain, ip, timestamp FROM dns_requests WHERE domain LIKE :domain");
-$stmt->bindValue(':domain', $domain, SQLITE3_TEXT);
-$result = $stmt->execute();
-
-// 后缀匹配
-$like_domain = '%'.$domain;
-$stmt->bindValue(':domain', $like_domain, SQLITE3_TEXT);
-$result = $stmt->execute();
-
+// 查询 dns_requests 中匹配这些域名的数据
 $records = [];
-while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
-    $records[] = [
-        $row['domain'],
-        $row['ip'],
-        $row['timestamp']
-    ];
+foreach ($domains as $domain) {
+    $like_domain = '%' . $domain;
+    $stmt2 = $db->prepare("SELECT domain, ip, timestamp FROM dns_requests WHERE domain LIKE :domain");
+    $stmt2->bindValue(':domain', $like_domain, SQLITE3_TEXT);
+    $result2 = $stmt2->execute();
+
+    while ($row = $result2->fetchArray(SQLITE3_ASSOC)) {
+        $records[] = [
+            $row['domain'],
+            $row['ip'],
+            $row['timestamp']
+        ];
+    }
+
+    $stmt2->close();
 }
-// 设置Content-Type
-header('Content-Type: application/json; charset=utf-8');
-// 返回结果
+
+$db->close();
+
+// 输出 JSON 数据
 echo json_encode($records);
+
 ?>
