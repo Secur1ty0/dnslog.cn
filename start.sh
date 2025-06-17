@@ -1,7 +1,7 @@
 #!/bin/bash
 
 echo "[+] 启动 php-fpm..."
-php-fpm &
+php-fpm81 &
 
 echo "[+] 启动 nginx..."
 nginx
