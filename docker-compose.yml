@@ -1,0 +1,23 @@
+services:
+  dnslog:
+    container_name: dnslog-server-container
+    image: bur0y37rch/dnslog-server:latest
+    ports:
+      - "${HTTP_PORT}:80"
+      - "53:53/udp"
+    volumes:
+      - ./web:/var/www/dnslog/web
+      - ./data:/var/www/dnslog/data
+      - ./nginx.conf:/etc/nginx/nginx.conf   # ✅ 映射 Nginx 配置
+    restart: always
+    networks:
+      - dnslog-network
+    cap_add:
+      - NET_ADMIN
+      - NET_BIND_SERVICE
+    command: ["/bin/sh", "/start.sh"]
+    env_file:
+      - .env
+networks:
+  dnslog-network:         # 👈 这段必须定义，否则就报 undefined network 错
+    driver: bridge     # 可省略，默认就是 bridge

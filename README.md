@@ -46,8 +46,9 @@ vim /etc/opt/remi/php74/php.ini
 # 找到并取消注释
 session.save_path = "/tmp"
 
-chmod 777 /tmp
+
 chmod 777 /var/www/dnslogcn/data
+chmod 777 /tmp
 chown -R nginx:nginx /var/lib/php/session
 chmod -R 700 /var/lib/php/session
 ```
@@ -55,22 +56,30 @@ chmod -R 700 /var/lib/php/session
 ### 配置 Nginx 示例
 
 ```nginx
-server {
+{
     listen       80;
-    server_name  example.com;
+    server_name  _;
+    root         /var/www/dnslog/web;
+    include /etc/nginx/default.d/*.conf;
 
-    root   /var/www/dnslogcn/web;
-    index  index.php index.html;
-
-    location / {
-        try_files $uri $uri/ /index.php?$query_string;
+    location ~* /(dnsServer|db)\.php$ {
+        return 2;
     }
 
-    location ~ \.php$ {
+    location ~ ^/(index\.php|getdomain\.php|getrecords\.php)$ {
         include fastcgi_params;
         fastcgi_pass   127.0.0.1:9000;
         fastcgi_index  index.php;
         fastcgi_param  SCRIPT_FILENAME $document_root$fastcgi_script_name;
+    }
+    # 静态文件处理
+    location / {
+        try_files $uri @fallback;
+    }
+
+    # 当请求的 URI 不存在时，返回2错误
+    location @fallback {
+        return 2;
     }
 }
 ```
@@ -98,10 +107,8 @@ server {
 1. 编辑 `db.php`，设置你绑定的域名后缀：
 
 ```php
-// SQLite 数据库文件路径
-$db_file = '../data/domain.db';
-// Dnslog平台域名
-$domain_suffix = "example.cn";
+// Dnslog平台域名,替换 example.com 即可
+$domain_suffix = getenv('DOMAIN_SUFFIX') ?: 'example.com';
 ```
 
 2. 启动 DNS 服务：
@@ -114,6 +121,25 @@ php dnsServer.php &
 
 ```
 http://<your-server-ip>/index.php
+```
+
+---
+
+## 🛫️ Docker 启动
+
+`.env` 配置Web界面端口和域名:
+
+```bash
+# web服务监听端口
+HTTP_PORT=8081
+# 自定义的域名
+DOMAIN_SUFFIX=yourdomain.test
+```
+
+docker启动
+
+```bash
+docker-compose up -d
 ```
 
 ---
@@ -143,6 +169,7 @@ http://<your-server-ip>/index.php
 
 | 日期       | 更新内容                                   |
 | ---------- | :----------------------------------------- |
+| 2025-06-17 | ✅ Docker 快速部署 |
 | 2025-06-06 | ✅ 优化 SQLite 写入机制，避免并发冲突       |
 |            | ✅ 支持 DNS 查询记录展示最近 5 条           |
 |  | ✅ 增加 SQLite 文件备份与数据库清理机制，减轻读写压力 |
@@ -152,9 +179,8 @@ http://<your-server-ip>/index.php
 
 ## ✅ TODO
 
-* Docker 快速部署
 * Dns 重绑定
-* 
+
 ---
 
 ## 💡 Tips

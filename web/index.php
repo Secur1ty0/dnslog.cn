@@ -13,28 +13,6 @@
 <hr style=" height:2px;border:none;border-top:2px dashed #87CEFA;"/><br>
 </div>
 <script>
-function GetDomain()
-{
-	var xmlhttp;
-	if (window.XMLHttpRequest)
-	{
-		xmlhttp=new XMLHttpRequest();
-	}
-	else
-	{
-		xmlhttp=new ActiveXObject("Microsoft.XMLHTTP");
-	}
-	xmlhttp.onreadystatechange=function()
-	{
-		if (xmlhttp.readyState==4 && xmlhttp.status==200)
-		{
-			document.getElementById("myDomain").innerHTML=xmlhttp.responseText;
-		}
-	}
-	xmlhttp.open("GET","/getdomain.php?t="+ Math.random(),true);
-	xmlhttp.send();
-}
-
 function GetRecords()
 {
 	var xmlhttp;
@@ -70,6 +48,32 @@ function GetRecords()
 	xmlhttp.open("GET","/getrecords.php?t="+Math.random(),true);
 	xmlhttp.send();
 }
+function GetDomain()
+{
+	var xmlhttp;
+	if (window.XMLHttpRequest)
+	{
+		xmlhttp=new XMLHttpRequest();
+	}
+	else
+	{
+		xmlhttp=new ActiveXObject("Microsoft.XMLHTTP");
+	}
+	xmlhttp.onreadystatechange=function()
+	{
+		if (xmlhttp.readyState==4 && xmlhttp.status==200)
+		{
+			document.getElementById("myDomain").innerHTML=xmlhttp.responseText;
+		}
+	}
+	xmlhttp.open("GET","/getdomain.php?t="+ Math.random(),true);
+	xmlhttp.send();
+	GetRecords();
+}
+
+
+// Set interval to call GetRecords every 3 seconds
+setInterval(GetRecords, 3000);
 </script>
 <div id="content" style="text-align:center;">
 <button type="button" onclick="GetDomain()">Get SubDomain</button>
