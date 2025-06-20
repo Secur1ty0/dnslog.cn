@@ -8,7 +8,7 @@ services:
     volumes:
       - ./web:/var/www/dnslog/web
       - ./data:/var/www/dnslog/data
-      - ./nginx.conf:/etc/nginx/nginx.conf   # ✅ 映射 Nginx 配置
+      - ./nginx.conf:/etc/nginx/nginx.conf
     restart: always
     networks:
       - dnslog-network
@@ -19,5 +19,5 @@ services:
     env_file:
       - .env
 networks:
-  dnslog-network:         # 👈 这段必须定义，否则就报 undefined network 错
-    driver: bridge     # 可省略，默认就是 bridge
+  dnslog-network:
+    driver: bridge
